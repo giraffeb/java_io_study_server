@@ -2,6 +2,7 @@ package server.impl.repository;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.interfaces.Bean;
 import server.impl.vo.chat.ChatUser;
 
 import java.io.*;
@@ -17,6 +18,7 @@ import java.util.Map;
  */
 
 //TODO: 유저 파일로 저장하는 기능 만들기.
+@Bean
 public class ChatUserRepository {
 
     static Logger LOG = LoggerFactory.getLogger(ChatUserRepository.class);
@@ -108,6 +110,10 @@ public class ChatUserRepository {
     }
 
     public void readFile(){
+        if(!this.db.exists()){
+            return;
+        }
+
         ObjectInputStream objectInputStream;
         try {
             objectInputStream = new ObjectInputStream(new FileInputStream(this.db));

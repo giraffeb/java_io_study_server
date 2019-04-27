@@ -2,7 +2,8 @@ package server.impl.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import server.impl.io.SimpleMessageFactory;
+import server.interfaces.Bean;
+import server.impl.io.SimpleMessageIO;
 import server.impl.repository.ChatRoomRepository;
 import server.impl.repository.ChatUserRepository;
 import server.impl.repository.LoginChatUserRepository;
@@ -21,36 +22,32 @@ import java.util.*;
  * 클라이언트로 들어온 RequestMessage를 해석해서
  * 적절한 메소드를 호출합니다.
  */
-public class RequestMessageParser {
+@Bean
+public class SimpleMessageController {
 
     static Logger LOG = LoggerFactory.getLogger(RequestMessage.class);
-    /**
-     * TODO: 의존성을 주입해야 할지, 자체적으로 생성할지 결정해야함.
-     */
+
     ChatUserRepository chatUserRepository;
     LoginChatUserRepository loginChatUserRepository;
     ChatRoomRepository chatRoomRepository;
 
-    SimpleMessageFactory simpleMessageFactory;
-
+    SimpleMessageIO simpleMessageIO;
 
     /**
-     * 임시적으로 만들어 놓은 부분입니다.
+     * 기본 생성자로 객체 생성 후 -> 외부에서 의존성 주입해주기 위함.
      */
-    public void init(){
-        this.chatUserRepository = new ChatUserRepository();
-
-        this.loginChatUserRepository = new LoginChatUserRepository();
-
-        this.chatRoomRepository = new ChatRoomRepository();
-        this.chatRoomRepository.saveChatRoom(new ChatRoom().setChatRoomTitle("Hello new wolrd"));
-
-        this.simpleMessageFactory = new SimpleMessageFactory();
-
+    public SimpleMessageController() {
     }
 
-    public RequestMessageParser() {
-        init();
+    public SimpleMessageController(ChatUserRepository chatUserRepository
+            , LoginChatUserRepository loginChatUserRepository
+            , ChatRoomRepository chatRoomRepository
+            , SimpleMessageIO simpleMessageIO) {
+
+        this.chatUserRepository = chatUserRepository;
+        this.loginChatUserRepository = loginChatUserRepository;
+        this.chatRoomRepository = chatRoomRepository;
+        this.simpleMessageIO = simpleMessageIO;
     }
 
     /**
@@ -125,7 +122,7 @@ public class RequestMessageParser {
 
         }
 
-        this.simpleMessageFactory.sendResponseMessage(requestMessage.getSenderSocketChannel(), requestMessage.getByteBuffer(), responseMessage);
+        this.simpleMessageIO.sendResponseMessage(requestMessage.getSenderSocketChannel(), requestMessage.getByteBuffer(), responseMessage);
 
         LOG.debug(responseMessage.toString());
     }
@@ -161,7 +158,7 @@ public class RequestMessageParser {
                 continue;
             }
             responseMessage.setMessageSendChatUser(requestMessage.getChatUser());
-            this.simpleMessageFactory.sendResponseMessage(cur, sendBuffer, responseMessage);
+            this.simpleMessageIO.sendResponseMessage(cur, sendBuffer, responseMessage);
         }
 
     }
@@ -188,7 +185,7 @@ public class RequestMessageParser {
                                                 .setCorrect(true)
                                                 .setChatRoomNameList(tempChatRoomList);
 
-        this.simpleMessageFactory.sendResponseMessage(requestMessage.getSenderSocketChannel(), requestMessage.getByteBuffer(), responseMessage);
+        this.simpleMessageIO.sendResponseMessage(requestMessage.getSenderSocketChannel(), requestMessage.getByteBuffer(), responseMessage);
 
     }
 
@@ -236,7 +233,7 @@ public class RequestMessageParser {
         }
 
         //서버에서 로직 후 결과 반환
-        this.simpleMessageFactory.sendResponseMessage(requestMessage.getSenderSocketChannel(), requestMessage.getByteBuffer(), responseMessage);
+        this.simpleMessageIO.sendResponseMessage(requestMessage.getSenderSocketChannel(), requestMessage.getByteBuffer(), responseMessage);
 
     }
 
@@ -279,7 +276,7 @@ public class RequestMessageParser {
         /**
          * 응답을 보냄
          */
-        this.simpleMessageFactory.sendResponseMessage(requestMessage.getSenderSocketChannel(), requestMessage.getByteBuffer(), responseMessage);
+        this.simpleMessageIO.sendResponseMessage(requestMessage.getSenderSocketChannel(), requestMessage.getByteBuffer(), responseMessage);
 
 
     }
@@ -297,7 +294,7 @@ public class RequestMessageParser {
                                             .setCorrect(true)
                                             .setReceiveChatUser(newChatUser);
 
-        this.simpleMessageFactory.sendResponseMessage(requestMessage.getSenderSocketChannel(), requestMessage.getByteBuffer(), responseMessage);
+        this.simpleMessageIO.sendResponseMessage(requestMessage.getSenderSocketChannel(), requestMessage.getByteBuffer(), responseMessage);
     }
 
 

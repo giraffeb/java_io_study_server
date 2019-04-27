@@ -1,91 +1,145 @@
 package server.impl.io;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import server.interfaces.BasicIO;
-import server.interfaces.Message;
 
-import java.io.IOException;
+
+import server.interfaces.Bean;
+import server.impl.vo.message.RequestMessage;
+import server.impl.vo.message.ResponseMessage;
+
+import java.io.*;
 import java.nio.ByteBuffer;
-import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SocketChannel;
-import java.util.Arrays;
+
 
 /**
- * TODO: 클래스 이름이 사용목적에 적절하지 않습니다.
+ * Request, Response Message를 serialize해서
  */
-public class SimpleMessageIO implements BasicIO {
+@Bean
+public class SimpleMessageIO extends SimpleBytesIO {
 
-    static Logger LOG = LoggerFactory.getLogger(SimpleMessageIO.class);
+    ObjectOutputStream objectOutputStream;
+    ByteArrayOutputStream byteOutputStream;
+
+    ObjectInputStream objectInputStream;
+    ByteArrayInputStream byteInputStream;
 
 
-    @Override
-    public byte[] readMessage(SocketChannel socketChannel, ByteBuffer byteBuffer) {
-        byte[] message = null;
+    public void objectWriteInit(){
+        this.byteOutputStream = new ByteArrayOutputStream();
+        try {
+            this.objectOutputStream = new ObjectOutputStream(this.byteOutputStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
-        int readCount = 0;
-        int targetReadCount = Message.HEADER_SIZE; //초기에 읽은 사이즈는 헤더사이즈 만큼입니다.
 
-        int bodySize = 0;
+    public SimpleMessageIO() {
+        super();
+    }
 
+    public void sendRequestMessage(SocketChannel socketChannel, ByteBuffer byteBuffer, RequestMessage requestMessage){
+        byte[] messageBytes = this.requestMessageToByteArray(requestMessage);
+        this.sendMessage(socketChannel, byteBuffer, messageBytes);
+    }
+
+    public RequestMessage readRequestMessage(SocketChannel socketChannel, ByteBuffer byteBuffer){
+        byte[] messageBytes = this.readMessage(socketChannel, byteBuffer);
+        if(messageBytes == null){
+            return null;
+        }
+
+        RequestMessage requestMessage = this.byteArrayToRequestMessage(messageBytes);
+
+        return requestMessage;
+    }
+
+    public RequestMessage byteArrayToRequestMessage(byte[] bytes){
+         RequestMessage requestMessage = null;
 
         try {
-            readCount = socketChannel.read(byteBuffer);
-
-            if(readCount < 0){
-                //socketChannel closed
-                socketChannel.close();
-            }else if(readCount == 0) {
-                //읽을게 없으면
-                return null;
-            }else{
-                if(targetReadCount <= readCount){//헤더사이즈만큼 읽어진 경우.
-                    byteBuffer.flip();
-                    bodySize = byteBuffer.getInt();//Header가 단순히 인트사이즈만 다루므
-
-                    targetReadCount = bodySize;
-                    readCount -= Message.HEADER_SIZE;
-
-                    if(targetReadCount <= readCount){ //바디크기만큼 읽어진 경우
-                        message = Arrays.copyOfRange(byteBuffer.array(), byteBuffer.position(), byteBuffer.position() + bodySize);
-                        byteBuffer.get(byteBuffer.array(), byteBuffer.position(), bodySize); //바이트 버퍼에 읽은 부분 표시 -> position 값 증가
-                    }else{
-                        //
-                    }
-
-                }
-
-            }
+            this.byteInputStream = new ByteArrayInputStream(bytes);
+            this.objectInputStream = new ObjectInputStream(this.byteInputStream);
+            requestMessage = (RequestMessage) this.objectInputStream.readObject();
 
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        return requestMessage;
+    }
+
+    public byte[] requestMessageToByteArray(RequestMessage requestMessage){
+        objectWriteInit();
+        byte[] bytes = null;
+
+        try {
+            this.objectOutputStream.writeObject(requestMessage);
+            bytes = this.byteOutputStream.toByteArray();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return bytes;
+    }
+
+    public void sendResponseMessage(SocketChannel socketChannel, ByteBuffer byteBuffer, ResponseMessage responseMessage){
+        byte[] messageBytes = this.responseMessageToByteArray(responseMessage);
+        this.sendMessage(socketChannel, byteBuffer, messageBytes);
+    }
+
+    public ResponseMessage readResponseMessage(SocketChannel socketChannel, ByteBuffer byteBuffer){
+        byte[] messageBytes = this.readMessage(socketChannel, byteBuffer);
+        if(messageBytes == null){
+            return null;
+        }
+        ResponseMessage responseMessage = this.byteArrayToResponseMessage(messageBytes);
+
+        return responseMessage;
+    }
+
+    public ResponseMessage byteArrayToResponseMessage(byte[] bytes){
+        ResponseMessage responseMessage = null;
+
+        try {
+            this.byteInputStream = new ByteArrayInputStream(bytes);
+            this.objectInputStream = new ObjectInputStream(this.byteInputStream);
+            responseMessage = (ResponseMessage) this.objectInputStream.readObject();
+            this.objectInputStream.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        return responseMessage;
+    }
+
+    public byte[] responseMessageToByteArray(ResponseMessage responseMessage){
+        //이코드로 작동확인완료
+        objectWriteInit();
+
+        byte[] bytes = null;
+        try {
+            this.objectOutputStream.writeObject(responseMessage);
+            bytes = this.byteOutputStream.toByteArray();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }finally {
             try {
-                socketChannel.close();
-            } catch (IOException e1) {
-                e1.printStackTrace();
+                this.byteOutputStream.close();
+                this.objectOutputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
 
-        byteBuffer.compact();
-
-        return message;
+        return bytes;
     }
 
-    @Override
-    public void sendMessage(SocketChannel socketChannel, ByteBuffer byteBuffer, byte[] message) {
-        LOG.debug(byteBuffer.toString());
 
-        byteBuffer.putInt(message.length);
-        byteBuffer.put(message);
-        byteBuffer.flip();
-
-        try {
-            socketChannel.write(byteBuffer);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        byteBuffer.compact();
-
-    }
 }

@@ -1,10 +1,11 @@
 package server.impl.repository;
 
+import server.interfaces.Bean;
 import server.impl.vo.chat.ChatRoom;
-import sun.misc.SoftCache;
 
 import java.util.*;
 
+@Bean
 public class ChatRoomRepository {
 
     Map<Integer, ChatRoom> chatRoomList;

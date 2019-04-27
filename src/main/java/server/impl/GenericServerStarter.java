@@ -2,8 +2,9 @@ package server.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import server.impl.controller.RequestMessageParser;
-import server.impl.io.SimpleMessageFactory;
+import server.interfaces.Bean;
+import server.impl.controller.SimpleMessageController;
+import server.impl.io.SimpleMessageIO;
 import server.impl.repository.SimpleMessageQueue;
 import server.impl.vo.message.RequestMessage;
 import server.interfaces.Message;
@@ -23,6 +24,7 @@ import java.util.Set;
  * ServerSocketChannel을 초기화하고,
  * 클라이언트 SocketChannel을 새로 등록하고 입력을 처리합니다.
  */
+@Bean
 public class GenericServerStarter implements ServerStarter {
 
     private static Logger LOG = LoggerFactory.getLogger(GenericServerStarter.class);
@@ -33,34 +35,18 @@ public class GenericServerStarter implements ServerStarter {
 
     private SimpleMessageQueue simpleMessageQueue;
 
+    private SimpleMessageIO simpleMessageIO;
+    private SimpleMessageController simpleMessageParser;
 
-    private SimpleMessageFactory simpleMessageFactory;
-    private RequestMessageParser requestMessageParser;
 
-
-    /**
-     * TODO: 객체생성을 어디서 해주는게 적절할까?
-     * 전체적으로 필요한 객체들을 여기서 생성해주는데, 위치가 적절한거 같지는 않다.
-     *
-     * @throws IOException
-     */
     @Override
     public void init() throws IOException {
-
         this.selector = Selector.open();
 
         this.serverSocketChannel = ServerSocketChannel.open();
         this.serverSocketChannel.bind(new InetSocketAddress(this.serverPort));
         this.serverSocketChannel.configureBlocking(false);
-
         this.serverSocketChannel.register(this.selector, SelectionKey.OP_ACCEPT);
-
-        this.simpleMessageQueue = new SimpleMessageQueue();
-
-        this.simpleMessageFactory = new SimpleMessageFactory();
-        this.requestMessageParser = new RequestMessageParser();
-
-
     }
 
     /**
@@ -68,10 +54,16 @@ public class GenericServerStarter implements ServerStarter {
      * @param serverPort
      * @throws IOException
      */
-    public GenericServerStarter(int serverPort) throws IOException {
+    public GenericServerStarter(int serverPort, SimpleMessageIO simpleMessageIO, SimpleMessageController simpleMessageParser) throws IOException {
         LOG.debug("CONSTRUCTOR");
         this.serverPort = serverPort;
+        this.simpleMessageIO = simpleMessageIO;
+        this.simpleMessageParser = simpleMessageParser;
+
         init();
+    }
+
+    public GenericServerStarter() {
     }
 
     /**
@@ -128,7 +120,7 @@ public class GenericServerStarter implements ServerStarter {
                     curSocketChannel = (SocketChannel) curSelectionKey.channel();
                     curByteBuffer = (ByteBuffer) curSelectionKey.attachment();
 
-                    RequestMessage requestMessage = this.simpleMessageFactory.readRequestMessage(curSocketChannel, curByteBuffer);
+                    RequestMessage requestMessage = this.simpleMessageIO.readRequestMessage(curSocketChannel, curByteBuffer);
                     if(requestMessage == null){
                         /**
                          * 소켓 연결이 종료되었거나, 메시지가 정상적으로 들어오지 않은 경우.
@@ -150,7 +142,7 @@ public class GenericServerStarter implements ServerStarter {
                     /**
                      * requestMessage 처리하는 로직 호출
                      */
-                    this.requestMessageParser.parseMessage(requestMessage);
+                    this.simpleMessageParser.parseMessage(requestMessage);
 
                 }else if(!curSelectionKey.isValid()){
                     curSelectionKey.cancel();

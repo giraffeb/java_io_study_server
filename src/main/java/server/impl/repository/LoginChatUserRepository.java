@@ -2,6 +2,7 @@ package server.impl.repository;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.interfaces.Bean;
 import server.impl.vo.chat.ChatUser;
 
 import java.nio.channels.SocketChannel;
@@ -15,6 +16,7 @@ import java.util.Map;
  * 아이디 값을 어떻게 처리할까 세션이라고 생각하면 될텐데
  *
  */
+@Bean
 public class LoginChatUserRepository {
 
     static Logger LOG = LoggerFactory.getLogger(LoginChatUserRepository.class);
