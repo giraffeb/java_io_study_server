@@ -1,12 +1,19 @@
 package server.impl.vo.chat;
 
+import lombok.Data;
+import lombok.experimental.Accessors;
+
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+
+@Data
+@Accessors(chain = true)
 public class ChatRoom {
+
 
     int chatRoomId;
     String chatRoomTitle;
@@ -39,31 +46,4 @@ public class ChatRoom {
         return this;
     }
 
-    public int getChatRoomId() {
-        return chatRoomId;
-    }
-
-    public String getChatRoomTitle() {
-        return chatRoomTitle;
-    }
-
-
-    public ChatRoom setChatRoomId(int chatRoomId) {
-        this.chatRoomId = chatRoomId;
-        return this;
-    }
-
-    public ChatRoom setChatRoomTitle(String chatRoomTitle) {
-        this.chatRoomTitle = chatRoomTitle;
-        return this;
-    }
-
-    @Override
-    public String toString() {
-        return "ChatRoom{" +
-                "chatRoomId=" + chatRoomId +
-                ", chatRoomTitle='" + chatRoomTitle + '\'' +
-                ", chatUserList=" + chatUserList +
-                '}';
-    }
 }

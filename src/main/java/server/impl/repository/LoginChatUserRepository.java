@@ -6,6 +6,8 @@ import server.interfaces.Bean;
 import server.impl.vo.chat.ChatUser;
 
 import java.nio.channels.SocketChannel;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,6 +36,7 @@ public class LoginChatUserRepository {
 
 
     public void printUserList(){
+
         LOG.debug("#START :: PRINT_USER_LIST : "+this.loginChatUserList.size());
         for(SocketChannel socketChannel : this.loginChatUserList.keySet()){
             LOG.debug(socketChannel + this.loginChatUserList.get(socketChannel).toString());

@@ -5,6 +5,7 @@ import server.impl.io.SimpleMessageIO;
 import server.impl.repository.ChatRoomRepository;
 import server.impl.repository.ChatUserRepository;
 import server.impl.repository.LoginChatUserRepository;
+import server.impl.repository.TokenRepository;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,8 +27,9 @@ public class DependencyControl {
         ChatUserRepository chatUserRepository = new ChatUserRepository();
         ChatRoomRepository chatRoomRepository = new ChatRoomRepository();
         LoginChatUserRepository loginChatUserRepository = new LoginChatUserRepository();
+        TokenRepository tokenRepository = new TokenRepository();
 
-        SimpleMessageController simpleMessageParser = new SimpleMessageController(chatUserRepository, loginChatUserRepository, chatRoomRepository, simpleMessageIO);
+        SimpleMessageController simpleMessageParser = new SimpleMessageController(chatUserRepository, loginChatUserRepository, chatRoomRepository, tokenRepository, simpleMessageIO );
         //END : SimpleMessageController dependency
 
         this.container.put(SimpleMessageController.class, simpleMessageParser);

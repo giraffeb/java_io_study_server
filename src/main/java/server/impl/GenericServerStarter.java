@@ -36,7 +36,7 @@ public class GenericServerStarter implements ServerStarter {
     private SimpleMessageQueue simpleMessageQueue;
 
     private SimpleMessageIO simpleMessageIO;
-    private SimpleMessageController simpleMessageParser;
+    private SimpleMessageController simpleMessageController;
 
 
     @Override
@@ -58,7 +58,7 @@ public class GenericServerStarter implements ServerStarter {
         LOG.debug("CONSTRUCTOR");
         this.serverPort = serverPort;
         this.simpleMessageIO = simpleMessageIO;
-        this.simpleMessageParser = simpleMessageParser;
+        this.simpleMessageController = simpleMessageParser;
 
         init();
     }
@@ -101,11 +101,10 @@ public class GenericServerStarter implements ServerStarter {
                 curSelectionKey = iteratorSelectionKeys.next();
 
                 if(curSelectionKey.isAcceptable()){
-                    /**
-                     * 요청이 들어옹 소켓채널과 바이트 버퍼를 생성하고, selector에 등록함.
-                     */
+
                     LOG.debug("ACCEPTABLE");
 
+                    //요청이 들어오면 소켓채널을 생성하고, 버퍼를 할당함.
                     curSocketChannel = ((ServerSocketChannel)curSelectionKey.channel()).accept();
                     curSocketChannel.configureBlocking(false);
                     curSocketChannel.register(this.selector, SelectionKey.OP_READ, ByteBuffer.allocate(Message.MESSAGE_BUFFER_SIZE));
@@ -122,35 +121,25 @@ public class GenericServerStarter implements ServerStarter {
 
                     RequestMessage requestMessage = this.simpleMessageIO.readRequestMessage(curSocketChannel, curByteBuffer);
                     if(requestMessage == null){
-                        /**
-                         * 소켓 연결이 종료되었거나, 메시지가 정상적으로 들어오지 않은 경우.
-                         */
+                        //소켓채이 종료된경우
                         LOG.debug("Socket Closed or No Data read");
                         break;
                     }
-                    /**
-                     * 이 메시지를 보낸 사용자의 ip:port번호를 부여함.
-                     */
-                    requestMessage.setSenderSocketChannel(curSocketChannel)
-                            .setByteBuffer(curByteBuffer);
 
-                    /**
-                     * 받은 메시지 출력
-                     */
+                    //요청이 메시지 발신자를 확인하기 위해서 소켓채널은 요청 메시지에 등록
+                    requestMessage.setSenderSocketChannel(curSocketChannel)
+                                    .setByteBuffer(curByteBuffer);
+                    //요청 메시지 확인용
                     LOG.debug(requestMessage.toString());
 
-                    /**
-                     * requestMessage 처리하는 로직 호출
-                     */
-                    this.simpleMessageParser.parseMessage(requestMessage);
+                    //요청 메시지 분
+                    this.simpleMessageController.parseMessageState(requestMessage);
 
                 }else if(!curSelectionKey.isValid()){
                     curSelectionKey.cancel();
                 }
 
-                /**
-                 * iteratorSelectionKeys에서 사용된 SelectionKey를 제거함.
-                 */
+                //이벤트 처리한 셀렉션 키 제
                 iteratorSelectionKeys.remove();
 
             }

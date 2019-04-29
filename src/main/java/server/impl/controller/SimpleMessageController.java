@@ -2,6 +2,7 @@ package server.impl.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.impl.repository.TokenRepository;
 import server.interfaces.Bean;
 import server.impl.io.SimpleMessageIO;
 import server.impl.repository.ChatRoomRepository;
@@ -27,9 +28,11 @@ public class SimpleMessageController {
 
     static Logger LOG = LoggerFactory.getLogger(RequestMessage.class);
 
+
     ChatUserRepository chatUserRepository;
     LoginChatUserRepository loginChatUserRepository;
     ChatRoomRepository chatRoomRepository;
+    TokenRepository tokenRepository;
 
     SimpleMessageIO simpleMessageIO;
 
@@ -39,14 +42,17 @@ public class SimpleMessageController {
     public SimpleMessageController() {
     }
 
+
     public SimpleMessageController(ChatUserRepository chatUserRepository
             , LoginChatUserRepository loginChatUserRepository
             , ChatRoomRepository chatRoomRepository
+            , TokenRepository tokenRepository
             , SimpleMessageIO simpleMessageIO) {
 
         this.chatUserRepository = chatUserRepository;
         this.loginChatUserRepository = loginChatUserRepository;
         this.chatRoomRepository = chatRoomRepository;
+        this.tokenRepository = tokenRepository;
         this.simpleMessageIO = simpleMessageIO;
     }
 
@@ -54,7 +60,7 @@ public class SimpleMessageController {
      * MessageState에 따라서 행동을 지정합니다.
      * @param requestMessage
      */
-    public void parseMessage(RequestMessage requestMessage){
+    public void parseMessageState(RequestMessage requestMessage){
 
         switch (requestMessage.getState()){
             case CREATE_USER:
@@ -63,7 +69,7 @@ public class SimpleMessageController {
                 break;
 
             case LOGIN:
-                LOG.debug("parseMessage LOGIN CASE!");
+                LOG.debug("parseMessageState LOGIN CASE!");
                 doLogin(requestMessage);
                 break;
 
@@ -91,14 +97,33 @@ public class SimpleMessageController {
         }
     }
 
-
     /**
      * 사용자가 등록되어 있으면, 아이디, 패스워드 일치여부 확인.
      * 없다면 없다고 알림.
      * @param requestMessage
      */
     public void doLogin(RequestMessage requestMessage){
+        /**
+         * #클라이언트 에서 요청 방식
+         * #1 requestMessage에 메시지 상태 설정 : login
+         * #2 requestMessage에 user 객체 입력 :id, pw
+         * #3 requetMessage 전송
+         * #4 responseMessage 수신
+         * #5 테스트 완료.
+         */
 
+
+        /**
+         * #서버에서 요청 해석 방법
+         * #1 requestMessage 수식
+         * #2 user 객체를 가져와서 존재하는 지 확인
+         * #2-1 존재한다면
+         * #2-1-1 해당 정보를 loginChatUser에 저장(세션 역할) -> 토큰 발급 이후엔 토큰으로 확인
+         * #2-1-2 결과를 responseMessage로 전
+         * #2-2 존재하지 않는다면
+         * #2-2-1 에러 responseMessage를 발송
+         *
+         */
         boolean flag = false;
 
         ChatUser targetUser = this.chatUserRepository.findById(requestMessage.getChatUser().getId());
@@ -108,10 +133,12 @@ public class SimpleMessageController {
 
         if(targetUser != null){
             //return success response message
+            String token = this.tokenRepository.generateToken(targetUser);
             this.loginChatUserRepository.saveLoginChatUser(requestMessage.getSenderSocketChannel(), targetUser);
 
             responseMessage = new ResponseMessage()
                                     .setMessageState(MessageState.LOGIN)
+                                    .setToken(token)
                                     .setCorrect(true);
 
         }else{

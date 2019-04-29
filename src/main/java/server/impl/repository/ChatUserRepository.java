@@ -21,6 +21,7 @@ import java.util.Map;
 @Bean
 public class ChatUserRepository {
 
+
     static Logger LOG = LoggerFactory.getLogger(ChatUserRepository.class);
     Map<Integer, ChatUser> chatuserList;
 
