@@ -7,7 +7,7 @@
     </appender>
 
     <logger name="server" level="DEBUG"/>
-    <logger name="client" level="INFO"/>
+    <logger name="client" level="DEBUG"/>
 
 
     <root level="INFO">

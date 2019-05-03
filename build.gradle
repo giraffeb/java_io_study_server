@@ -1,12 +1,14 @@
 plugins {
     id 'java'
     id 'jacoco'
+    id 'com.github.kt3k.coveralls' version '2.8.2'
 }
 
 group 'org.giraffeb'
 version '0.1'
 
 sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 repositories {
     mavenCentral()
@@ -37,21 +39,11 @@ dependencies {
 }
 
 
-task codeCoverageReport(type: JacocoReport) {
-    executionData fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec")
-
-    subprojects.each {
-        sourceSets it.sourceSets.main
-    }
-
+jacocoTestReport {
     reports {
         xml.enabled true
-        xml.destination "${buildDir}/reports/jacoco/report.xml"
         html.enabled false
-        csv.enabled false
     }
 }
 
-codeCoverageReport.dependsOn {
-    subprojects*.test
-}
+check.dependsOn jacocoTestReport
