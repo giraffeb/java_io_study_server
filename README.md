@@ -1,3 +1,7 @@
+[![Build Status](https://travis-ci.org/giraffeb/java_io_study_server.svg?branch=master)](https://travis-ci.org/giraffeb/java_io_study_server)
+[![codecov](https://codecov.io/gh/giraffeb/java_io_study_server/branch/master/graph/badge.svg)](https://codecov.io/gh/giraffeb/java_io_study_server)
+[![Coverage Status](https://coveralls.io/repos/github/giraffeb/java_io_study_server/badge.svg?branch=master)](https://coveralls.io/github/giraffeb/java_io_study_server?branch=master)
+
 # java_io_study_server
 
 ## 설명
